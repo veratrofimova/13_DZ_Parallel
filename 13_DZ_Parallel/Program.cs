@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Drawing;
+using System.Threading;
 
 namespace _13_DZ_Parallel
 {
@@ -23,8 +25,13 @@ namespace _13_DZ_Parallel
                 watch.Stop();
 
                 watch.Restart();
-                PalallelLingSum(arr);
-                Console.WriteLine($"Параллельное через Thread: {watch.ElapsedMilliseconds} мс");
+                PalallelThreadInterlockedSum(arr);
+                Console.WriteLine($"Параллельное через PalallelThreadInterlocked: {watch.ElapsedMilliseconds} мс");
+                watch.Stop();
+
+                watch.Restart();
+                PalallelThreadPartialSum(arr);
+                Console.WriteLine($"Параллельное через PalallelThreadPartial: {watch.ElapsedMilliseconds} мс");
                 watch.Stop();
 
                 watch.Restart();
@@ -42,10 +49,28 @@ namespace _13_DZ_Parallel
             float sum = 0;
             array.Sum(x => sum += x);
         }
-        static void PalallelThreadSum(int[] array)
+
+        static void PalallelThreadInterlockedSum(int[] array)
         {
-            long sum = 0;           
+            long sum = 0;
             Parallel.ForEach(array, x => Interlocked.Add(ref sum, x));
+        }
+
+        static void PalallelThreadPartialSum(int[] array)
+        {
+            int part = 25;
+            int arraySizeInThread = array.Length / part;
+            float partialSum = 0;
+
+            Parallel.For(0, part, (counter) =>
+            {
+                float sum = 0;
+                for (int i = counter * arraySizeInThread; i < (counter + 1) * arraySizeInThread; i++)
+                {
+                    sum += array[i];
+                }
+                partialSum += sum;
+            });
         }
 
         static void PalallelLingSum(int[] array)
